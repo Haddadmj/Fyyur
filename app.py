@@ -50,6 +50,12 @@ class Venue(db.Model):
     seeking_description = db.Column(db.String(500))
     shows = db.relationship('Show', backref='venue', lazy=True)
 
+    def past_show(self):
+        return [show for show in self.show if show.start_time < datetime.now()]
+
+    def upcoming_show(self):
+        return [show for show in self.show if show.start_time > datetime.now()]
+
 
 class Artist(db.Model):
     __tablename__ = 'artist'
@@ -69,6 +75,12 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(500))
     shows = db.relationship('Show', backref='artist', lazy=True)
+
+    def past_show(self):
+        return [show for show in self.show if show.start_time < datetime.now()]
+
+    def upcoming_show(self):
+        return [show for show in self.show if show.start_time > datetime.now()]
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
