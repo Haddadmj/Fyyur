@@ -276,7 +276,6 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-    # TODO: insert form data as a new Venue record in the db, instead
     name = request.form.get('name')
     city = request.form.get('city')
     state = request.form.get('state')
@@ -326,7 +325,6 @@ def delete_venue(venue_id):
 
 @app.route('/artists')
 def artists():
-    # TODO: replace with real data returned from querying the database
     data = Artist.query.with_entities(Artist.id, Artist.name)
 
     return render_template('pages/artists.html', artists=data)
@@ -354,7 +352,6 @@ def search_artists():
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
     # shows the venue page with the given venue_id
-    # TODO: replace with real venue data from the venues table, using
     artist = Artist.query.get(artist_id)
     past_shows = []
     for show in artist.past_shows:
