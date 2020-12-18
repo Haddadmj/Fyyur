@@ -557,6 +557,9 @@ def shows():
 def create_shows():
     # renders form. do not touch.
     form = ShowForm()
+    form.artist_id.query = Artist.query.order_by('id')
+    form.venue_id.query = Venue.query.order_by('id')
+
     return render_template('forms/new_show.html', form=form)
 
 
