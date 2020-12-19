@@ -5,6 +5,7 @@
 	<div class="col-sm-6">
 		<h1 class="monospace">
 			{{ venue.name }}
+			<a href="/venues/{{ venue.id }}/edit" class="btn btn-primary"> Edit Venue </a>
 		</h1>
 		<p class="subtitle">
 			ID: {{ venue.id }}
@@ -72,6 +73,9 @@
 			</div>
 		</div>
 		{% endfor %}
+		<div class="col-sm-4">
+			<button id="delete-btn"  data-id='{{ venue.id }}' class="btn btn-primary btn-lg" style="background:red" name="Delete Venue">Delete Venue</button>
+		</div>
 	</div>
 </section>
 
