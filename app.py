@@ -536,7 +536,7 @@ def create_artist_submission():
 def shows():
     # displays list of shows at /shows
     data = []
-    shows = Show.query.all()
+    shows = Show.query.order_by(Show.artist_id).all()
     for show in shows:
         venue = Venue.query.get(show.venue_id)
         artist = Artist.query.get(show.artist_id)
