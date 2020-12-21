@@ -13,7 +13,7 @@ from logging import Formatter, FileHandler, error
 from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
-
+from models import *
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -21,134 +21,10 @@ from flask_migrate import Migrate
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
-db = SQLAlchemy(app)
+db.init_app(app)
 
 
 migrate = Migrate(app, db)
-#----------------------------------------------------------------------------#
-# Models.
-#----------------------------------------------------------------------------#
-
-
-class Venue(db.Model):
-    __tablename__ = 'venue'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-    genres = db.Column("genres", db.ARRAY(db.String()))
-    website = db.Column(db.String(240))
-    seeking_talent = db.Column(db.Boolean)
-    seeking_description = db.Column(db.String(500))
-    shows = db.relationship('Show', backref='venue',
-                            lazy=True, cascade="all, delete-orphan")
-
-    def __init__(self, name, city, state, address, phone, image_link, facebook_link, genres, website, seeking_talent, seeking_description, shows):
-        self.name = name
-        self.city = city
-        self.state = state
-        self.address = address
-        self.phone = phone
-        self.image_link = image_link
-        self.facebook_link = facebook_link
-        self.genres = genres
-        self.website = website
-        self.seeking_talent = seeking_talent
-        self.seeking_description = seeking_description
-        self.shows = shows
-
-    def __repr__(self):
-        return f'Venue ID {self.id} : Venue Name: {self.name}'
-
-    @property
-    def past_shows(self):
-        return [show for show in self.shows if show.start_time < datetime.now()]
-
-    @property
-    def upcoming_shows(self):
-        return [show for show in self.shows if show.start_time > datetime.now()]
-
-    @property
-    def num_past_shows(self):
-        return len(self.past_shows)
-
-    @property
-    def num_upcoming_shows(self):
-        return len(self.upcoming_shows)
-
-
-class Artist(db.Model):
-    __tablename__ = 'artist'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-    genres = db.Column("genres", db.ARRAY(db.String()))
-    website = db.Column(db.String(240))
-    seeking_venue = db.Column(db.Boolean)
-    seeking_description = db.Column(db.String(500))
-    shows = db.relationship('Show', backref='artist', lazy=True)
-
-    def __init__(self, name, city, state, phone, image_link, facebook_link, genres, website, seeking_talent, seeking_description, shows):
-        self.name = name
-        self.city = city
-        self.state = state
-        self.phone = phone
-        self.image_link = image_link
-        self.facebook_link = facebook_link
-        self.genres = genres
-        self.website = website
-        self.seeking_talent = seeking_talent
-        self.seeking_description = seeking_description
-        self.shows = shows
-
-    def __repr__(self):
-        return f'Artist ID {self.id} : Artist Name: {self.name}'
-
-    @property
-    def past_shows(self):
-        return [show for show in self.shows if show.start_time < datetime.now()]
-
-    @property
-    def upcoming_shows(self):
-        return [show for show in self.shows if show.start_time > datetime.now()]
-
-    @property
-    def num_past_shows(self):
-        return len(self.past_shows)
-
-    @property
-    def num_upcoming_shows(self):
-        return len(self.upcoming_shows)
-
-
-class Show(db.Model):
-    __tablename__ = 'show'
-    id = db.Column(db.Integer, primary_key=True)
-    venue_id = db.Column(db.Integer, db.ForeignKey(
-        'venue.id', ondelete='CASCADE'), nullable=False)
-    artist_id = db.Column(db.Integer, db.ForeignKey(
-        'artist.id'), nullable=False)
-    start_time = db.Column(db.DateTime, nullable=False,
-                           default=datetime.utcnow)
-
-    def __init__(self, venue_id, artist_id, start_time):
-        self.venue_id = venue_id
-        self.artist_id = artist_id
-        self.start_time = start_time
-
-    def __repr__(self):
-        return f'Show ID {self.id}'
-
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -219,8 +95,10 @@ def search_venues():
 def show_venue(venue_id):
     # shows the venue page with the given venue_id
     venue = Venue.query.get(venue_id)
+    past_shows_query = db.session.query(Show).join(Venue).filter(
+        Show.venue_id == venue_id).filter(Show.start_time < datetime.now()).all()
     past_shows = []
-    for show in venue.past_shows:
+    for show in past_shows_query:
         artist = Artist.query.get(show.artist_id)
         past_shows.append({
             "artist_id": show.artist_id,
@@ -228,9 +106,10 @@ def show_venue(venue_id):
             "artist_image_link": artist.image_link,
             "start_time": str(show.start_time)
         })
-
+    upcoming_shows_query = db.session.query(Show).join(Venue).filter(
+        Show.venue_id == venue_id).filter(Show.start_time > datetime.now()).all()
     upcoming_shows = []
-    for show in venue.upcoming_shows:
+    for show in upcoming_shows_query:
         artist = Artist.query.get(show.artist_id)
         upcoming_shows.append({
             "artist_id": show.artist_id,
@@ -238,6 +117,7 @@ def show_venue(venue_id):
             "artist_image_link": artist.image_link,
             "start_time": str(show.start_time)
         })
+
     data = {
         "id": venue.id,
         "name": venue.name,
@@ -253,8 +133,8 @@ def show_venue(venue_id):
         "image_link": venue.image_link,
         "past_shows": past_shows,
         "upcoming_shows": upcoming_shows,
-        "past_shows_count": venue.num_past_shows,
-        "upcoming_shows_count": venue.num_upcoming_shows,
+        "past_shows_count": len(past_shows),
+        "upcoming_shows_count": len(upcoming_shows),
     }
     return render_template('pages/show_venue.html', venue=data)
 
@@ -354,8 +234,10 @@ def search_artists():
 def show_artist(artist_id):
     # shows the venue page with the given venue_id
     artist = Artist.query.get(artist_id)
+    past_shows_query = db.session.query(Show).join(Venue).filter(
+        Show.artist_id == artist_id).filter(Show.start_time < datetime.now()).all()
     past_shows = []
-    for show in artist.past_shows:
+    for show in past_shows_query:
         venue = Venue.query.get(show.venue_id)
         past_shows.append({
             "venue_id": venue.id,
@@ -363,8 +245,11 @@ def show_artist(artist_id):
             "venue_image_link": venue.image_link,
             "start_time": show.start_time
         })
+
+    upcoming_shows_query = db.session.query(Show).join(Venue).filter(
+        Show.artist_id == artist_id).filter(Show.start_time > datetime.now()).all()
     upcoming_shows = []
-    for show in artist.upcoming_shows:
+    for show in upcoming_shows_query:
         venue = Venue.query.get(show.venue_id)
         upcoming_shows.append({
             "venue_id": venue.id,
@@ -372,6 +257,7 @@ def show_artist(artist_id):
             "venue_image_link": venue.image_link,
             "start_time": show.start_time
         })
+
     data = {
         "id": artist.id,
         "name": artist.name,
@@ -386,8 +272,8 @@ def show_artist(artist_id):
         "image_link": artist.image_link,
         "past_shows": past_shows,
         "upcoming_shows": upcoming_shows,
-        "past_shows_count": artist.num_past_shows,
-        "upcoming_shows_count": artist.num_upcoming_shows,
+        "past_shows_count": len(past_shows),
+        "upcoming_shows_count": len(upcoming_shows),
     }
     return render_template('pages/show_artist.html', artist=data)
 
