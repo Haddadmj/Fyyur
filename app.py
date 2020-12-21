@@ -83,7 +83,6 @@ def search_venues():
         data.append({
             "id": venue.id,
             "name": venue.name,
-            "num_upcoming_shows": venue.num_upcoming_shows
         })
     response = {
         "count": len(data),
@@ -158,7 +157,8 @@ def create_venue_submission():
         form.populate_obj(venue)
         db.session.add(venue)
         db.session.commit()
-    except:
+    except SQLAlchemyError as e:
+        print(e)
         error = True
         db.session.rollback()
     finally:
@@ -179,7 +179,8 @@ def delete_venue(venue_id):
     try:
         db.session.delete(venue)
         db.session.commit()
-    except:
+    except SQLAlchemyError as e:
+        print(e)
         flash('An error occurred. Venue ' +
               venue.name + ' could not be deleted.')
         db.session.rollback()
@@ -209,7 +210,6 @@ def search_artists():
         data.append({
             "id": artist.id,
             "name": artist.name,
-            "num_upcoming_shows": artist.num_upcoming_shows
         })
     response = {
         "count": len(data),
@@ -305,7 +305,8 @@ def edit_artist_submission(artist_id):
         artist.seeking_description = seeking_description
         db.session.add(artist)
         db.session.commit()
-    except:
+    except SQLAlchemyError as e:
+        print(e)
         db.session.rollback()
     finally:
         db.session.close()
@@ -351,7 +352,7 @@ def edit_venue_submission(venue_id):
         venue.seeking_description = seeking_description
         db.session.add(venue)
         db.session.commit()
-    except:
+    except SQLAlchemyError as e:
         db.session.rollback()
     finally:
         db.session.close()
@@ -377,7 +378,7 @@ def create_artist_submission():
         form.populate_obj(artist)
         db.session.add(artist)
         db.session.commit()
-    except:
+    except SQLAlchemyError as e:
         error = True
         db.session.rollback()
     finally:
@@ -434,7 +435,7 @@ def create_show_submission():
         show = Show(venue_id, artist_id, start_time)
         db.session.add(show)
         db.session.commit()
-    except:
+    except SQLAlchemyError as e:
         error = True
         db.session.rollback()
     finally:
