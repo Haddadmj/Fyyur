@@ -151,23 +151,24 @@ def create_venue_form():
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
     form = VenueForm(request.form)
-    error = False
-    try:
-        venue = Venue()
-        form.populate_obj(venue)
-        db.session.add(venue)
-        db.session.commit()
-    except SQLAlchemyError as e:
-        print(e)
-        error = True
-        db.session.rollback()
-    finally:
-        db.session.close()
-    if error:
+
+    if form.validate():
+        try:
+            venue = Venue()
+            form.populate_obj(venue)
+            db.session.add(venue)
+            db.session.commit()
+            flash('Venue ' + request.form['name'] +
+                  ' was successfully listed!')
+        except SQLAlchemyError as e:
+            print(e)
+            db.session.rollback()
+        finally:
+            db.session.close()
+    else:
+        flash(form.errors)
         flash('An error occurred. Venue ' +
               request.form['name'] + ' could not be listed.')
-    else:
-        flash('Venue ' + request.form['name'] + ' was successfully listed!')
 
     return render_template('pages/home.html')
 
@@ -373,21 +374,24 @@ def create_artist_form():
 def create_artist_submission():
     form = ArtistForm(request.form)
     error = False
-    try:
-        artist = Artist()
-        form.populate_obj(artist)
-        db.session.add(artist)
-        db.session.commit()
-    except SQLAlchemyError as e:
-        error = True
-        db.session.rollback()
-    finally:
-        db.session.close()
-    if error:
+
+    if form.validate():
+        try:
+            artist = Artist()
+            form.populate_obj(artist)
+            db.session.add(artist)
+            db.session.commit()
+            flash('Artist ' + request.form['name'] +
+                  ' was successfully listed!')
+        except SQLAlchemyError as e:
+            print(e)
+            db.session.rollback()
+        finally:
+            db.session.close()
+    else:
+        flash(form.errors)
         flash('An error occurred. Artist ' +
               request.form['name'] + ' could not be listed.')
-    else:
-        flash('Artist ' + request.form['name'] + ' was successfully listed!')
 
     return render_template('pages/home.html')
 

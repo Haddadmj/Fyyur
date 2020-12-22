@@ -3,7 +3,7 @@ from flask_wtf import Form
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField
 from wtforms.fields.core import BooleanField
 from wtforms.ext.sqlalchemy.fields import QuerySelectField
-from wtforms.validators import DataRequired, AnyOf, URL
+from wtforms.validators import DataRequired, AnyOf, Regexp, URL
 
 
 class ShowForm(Form):
@@ -84,7 +84,7 @@ class VenueForm(Form):
         'address', validators=[DataRequired()]
     )
     phone = StringField(
-        'phone', validators=[DataRequired()]
+        'phone', validators=[DataRequired(), Regexp('^\d{3}-\d{3}-\d{4}$', message='Wrong Phone Format, use this format xxx-xxx-xxxx')]
     )
     image_link = StringField(
         'image_link', validators=[URL()]
@@ -191,7 +191,7 @@ class ArtistForm(Form):
         ]
     )
     phone = StringField(
-        'phone', validators=[DataRequired()]
+        'phone', validators=[DataRequired(), Regexp('^\d{3}-\d{3}-\d{4}$', message='Wrong Phone Format, use this format xxx-xxx-xxxx')]
     )
     image_link = StringField(
         'image_link', validators=[URL()]
