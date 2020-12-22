@@ -161,6 +161,7 @@ def create_venue_submission():
             flash('Venue ' + request.form['name'] +
                   ' was successfully listed!')
         except SQLAlchemyError as e:
+            print(sys.exc_info())
             print(e)
             db.session.rollback()
         finally:
@@ -181,6 +182,7 @@ def delete_venue(venue_id):
         db.session.delete(venue)
         db.session.commit()
     except SQLAlchemyError as e:
+        print(sys.exc_info())
         print(e)
         flash('An error occurred. Venue ' +
               venue.name + ' could not be deleted.')
@@ -308,6 +310,7 @@ def edit_artist_submission(artist_id):
         db.session.commit()
     except SQLAlchemyError as e:
         print(e)
+        print(sys.exc_info())
         db.session.rollback()
     finally:
         db.session.close()
@@ -354,6 +357,8 @@ def edit_venue_submission(venue_id):
         db.session.add(venue)
         db.session.commit()
     except SQLAlchemyError as e:
+        print(sys.exc_info())
+        print(e)
         db.session.rollback()
     finally:
         db.session.close()
@@ -384,6 +389,7 @@ def create_artist_submission():
             flash('Artist ' + request.form['name'] +
                   ' was successfully listed!')
         except SQLAlchemyError as e:
+            print(sys.exc_info())
             print(e)
             db.session.rollback()
         finally:
@@ -440,6 +446,8 @@ def create_show_submission():
         db.session.add(show)
         db.session.commit()
     except SQLAlchemyError as e:
+        print(sys.exc_info())
+        print(e)
         error = True
         db.session.rollback()
     finally:
