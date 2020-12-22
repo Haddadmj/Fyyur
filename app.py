@@ -11,7 +11,7 @@ from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import (Formatter, FileHandler, error)
-from flask_wtf import Form
+from flask_wtf import FlaskForm
 from forms import *
 from flask_migrate import Migrate
 from models import *
@@ -160,9 +160,8 @@ def create_venue_submission():
             db.session.commit()
             flash('Venue ' + request.form['name'] +
                   ' was successfully listed!')
-        except SQLAlchemyError as e:
+        except:
             print(sys.exc_info())
-            print(e)
             db.session.rollback()
         finally:
             db.session.close()
@@ -181,9 +180,8 @@ def delete_venue(venue_id):
     try:
         db.session.delete(venue)
         db.session.commit()
-    except SQLAlchemyError as e:
+    except:
         print(sys.exc_info())
-        print(e)
         flash('An error occurred. Venue ' +
               venue.name + ' could not be deleted.')
         db.session.rollback()
@@ -282,38 +280,24 @@ def edit_artist(artist_id):
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-    name = request.form.get('name')
-    city = request.form.get('city')
-    state = request.form.get('state')
-    phone = request.form.get('phone')
-    image_link = request.form.get('image_link')
-    facebook_link = request.form.get('facebook_link')
-    genres = request.form.getlist('genres')
-    website = request.form.get('website')
-    seeking_venue = True if request.form.get(
-        'seeking_venue') in ('y', True) else False
-    seeking_description = request.form.get('seeking_description')
+    form = ArtistForm(request.form)
 
-    try:
-        artist = Artist.query.get(artist_id)
-        artist.name = name
-        artist.city = city
-        artist.state = state
-        artist.phone = phone
-        artist.image_link = image_link
-        artist.facebook_link = facebook_link
-        artist.genres = genres
-        artist.website = website
-        artist.seeking_venue = seeking_venue
-        artist.seeking_description = seeking_description
-        db.session.add(artist)
-        db.session.commit()
-    except SQLAlchemyError as e:
-        print(e)
-        print(sys.exc_info())
-        db.session.rollback()
-    finally:
-        db.session.close()
+    if form.validate():
+        try:
+            artist = Artist.query.get(artist_id)
+            form.populate_obj(artist)
+            db.session.add(artist)
+            db.session.commit()
+            flash('Artist has been modified')
+        except:
+            print(sys.exc_info())
+            db.session.rollback()
+        finally:
+            db.session.close()
+    else:
+        for field in form.errors:
+            flash(f'{field} : {form.errors[field][0]}')
+        flash('Artist has not been modified.')
 
     return redirect(url_for('show_artist', artist_id=artist_id))
 
@@ -328,40 +312,24 @@ def edit_venue(venue_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-    name = request.form.get('name')
-    city = request.form.get('city')
-    state = request.form.get('state')
-    address = request.form.get('address')
-    phone = request.form.get('phone')
-    image_link = request.form.get('image_link')
-    facebook_link = request.form.get('facebook_link')
-    genres = request.form.getlist('genres')
-    website = request.form.get('website')
-    seeking_talent = True if request.form.get(
-        'seeking_talent') in ('y', True) else False
-    seeking_description = request.form.get('seeking_description')
+    form = VenueForm(request.form)
 
-    try:
-        venue = Venue.query.get(venue_id)
-        venue.name = name
-        venue.city = city
-        venue.state = state
-        venue.address = address
-        venue.phone = phone
-        venue.image_link = image_link
-        venue.facebook_link = facebook_link
-        venue.genres = genres
-        venue.website = website
-        venue.seeking_talent = seeking_talent
-        venue.seeking_description = seeking_description
-        db.session.add(venue)
-        db.session.commit()
-    except SQLAlchemyError as e:
-        print(sys.exc_info())
-        print(e)
-        db.session.rollback()
-    finally:
-        db.session.close()
+    if form.validate():
+        try:
+            venue = Venue.query.get(venue_id)
+            form.populate_obj(venue)
+            db.session.add(venue)
+            db.session.commit()
+            flash('Venue has been modified')
+        except:
+            print(sys.exc_info())
+            db.session.rollback()
+        finally:
+            db.session.close()
+    else:
+        for field in form.errors:
+            flash(f'{field} : {form.errors[field][0]}')
+        flash('Venue has not been modified.')
 
     return redirect(url_for('show_venue', venue_id=venue_id))
 
@@ -388,9 +356,8 @@ def create_artist_submission():
             db.session.commit()
             flash('Artist ' + request.form['name'] +
                   ' was successfully listed!')
-        except SQLAlchemyError as e:
+        except:
             print(sys.exc_info())
-            print(e)
             db.session.rollback()
         finally:
             db.session.close()
@@ -427,7 +394,7 @@ def shows():
 @app.route('/shows/create')
 def create_shows():
     # renders form. do not touch.
-    form = ShowForm()
+    form = ShowForm(request.form)
     form.artist_id.query = Artist.query.order_by('id')
     form.venue_id.query = Venue.query.order_by('id')
 
@@ -436,27 +403,24 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
-    artist_id = request.form.get('artist_id')
-    venue_id = request.form.get('venue_id')
-    start_time = request.form.get('start_time')
-
     error = False
     try:
-        show = Show(venue_id, artist_id, start_time)
+        show = Show()
+        show.artist_id = request.form['artist_id']
+        show.venue_id = request.form['venue_id']
+        show.start_time = request.form['start_time']
         db.session.add(show)
         db.session.commit()
-    except SQLAlchemyError as e:
-        print(sys.exc_info())
-        print(e)
+    except:
         error = True
+        print(sys.exc_info())
         db.session.rollback()
     finally:
         db.session.close()
     if error:
-        flash('An error occurred. Show could not be listed.')
-    else:
-        flash('Show was successfully listed!')
+        flash('An error occurred. Show won\'t be added ')
 
+    flash('Show added')
     return render_template('pages/home.html')
 
 
