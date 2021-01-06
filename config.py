@@ -10,5 +10,5 @@ DEBUG = True
 
 
 # DATABASE URL
-SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:admin@localhost:5432/fyyurapp'
+SQLALCHEMY_DATABASE_URI = 'postgresql://localhost:5432/fyyurapp'
 SQLALCHEMY_TRACK_MODIFICATIONS = True
